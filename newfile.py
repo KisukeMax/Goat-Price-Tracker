@@ -12,6 +12,7 @@ import random
 
 ua = FakeUserAgent()
 
+# proxy
 p = "http://sweet7068:8I7gDxWY47kc2RXs@proxy.packetstream.io:31112"
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -27,8 +28,8 @@ def fetch_sku_data(keywords , selection):
     }
     header = {
         'accept': 'application/json',
-        # 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
-        'user-agent' : ua.random ,
+         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+        #'user-agent' : ua.random ,
         'accept-language': 'en-us',
         'accept-encoding': 'br,gzip,deflate'
     }
@@ -40,6 +41,7 @@ def fetch_sku_data(keywords , selection):
     offerAPI = f"https://www.goat.com/api/v1/highest_offers?productTemplateId={results['id']}"
     askAPI = f"https://www.goat.com/api/v1/product_variants?productTemplateId={results['slug']}"
     general = requests.get(generalAPI, headers = header, proxies = {"http" : p, "https" : p} , ).json()
+    #print(general)
     bids = requests.get(offerAPI, headers=header, proxies = {"http" : p, "https" : p}).json()
     asks = requests.get(askAPI, headers=header, proxies = {"http" : p, "https" : p}).json()
     link = f"https://goat.com/sneakers/{results['slug']}"
@@ -66,6 +68,7 @@ def fetch_sku_data(keywords , selection):
         priceDict = priceDict2
 
     priceDict = {k: v for k,v in priceDict.items() if v["ask"] != 0 or v["bid"] != 0}
+
         
     return priceDict
 
@@ -86,32 +89,33 @@ worksheet_dataframe = pd.DataFrame(worksheet1.get_all_records())
 
 Fetched_sku = {}
 for i, row in tqdm(worksheet_dataframe.iterrows() , total=worksheet_dataframe.shape[0]):
-    if not pd.isnull(row.get("SKU")):
+    # print(i)
+    # if not pd.isnull(row.get("SKU")):
+    if not pd.isnull(row.get("SKU")) and row.get("Stock Filter") == "TRUE":
         if not Fetched_sku.get(row.get("SKU")):
             try:
                 price_data = fetch_sku_data(row.get("SKU") , 0)
                 Fetched_sku[row.get("SKU")] = price_data
                 worksheet_dataframe.at[i , 'Goat Lowest Price' ] = Fetched_sku.get(row.get("SKU")).get(row.get("Size In US")).get("ask")
-                time.sleep(random.randint(1,10))
-                print("sleeping")
+                time.sleep(random.randint(10,60))
+                # print("sleeping")
             except Exception as e:
-                print(e)
-                time.sleep(random.randint(1,10))
-                print("error sleeping")
+                # print(e)
+            
+                time.sleep(random.randint(10,60))
+                # print("error sleeping")
 
                 # pass
         else:            
             try:
-                print(Fetched_sku.get(row.get("SKU")))
+              #  print(Fetched_sku.get(row.get("SKU")))
                 worksheet_dataframe.at[i , 'Goat Lowest Price' ] = Fetched_sku.get(row.get("SKU")).get(row.get("Size In US")).get("ask")
             except:
                 pass
-    if i > 1000:
-        break
             
             
 print("updating sheets")
-worksheet_dataframe.to_csv("data.csv" , index =  False)
+# worksheet_dataframe.to_csv("data.csv" , index =  False)
 dataframe_to_upload = worksheet_dataframe.fillna("")
 worksheet1.update([dataframe_to_upload.columns.values.tolist()] + dataframe_to_upload.values.tolist())
 print("sheets updated")
