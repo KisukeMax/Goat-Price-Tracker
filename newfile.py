@@ -84,7 +84,7 @@ client = gspread.authorize(cred)
     # #open sheet to update
 googlesheet = client.open('JJ SNEAKERS STORE')
     # #open Tab in sheet to update
-worksheet1 = googlesheet.worksheet("Goat Price")
+worksheet1 = googlesheet.worksheet("Goat Check coltest")
 worksheet_dataframe = pd.DataFrame(worksheet1.get_all_records())
 
 Fetched_sku = {}
@@ -97,12 +97,12 @@ for i, row in tqdm(worksheet_dataframe.iterrows() , total=worksheet_dataframe.sh
                 price_data = fetch_sku_data(row.get("SKU") , 0)
                 Fetched_sku[row.get("SKU")] = price_data
                 worksheet_dataframe.at[i , 'Goat Lowest Price' ] = Fetched_sku.get(row.get("SKU")).get(row.get("Size In US")).get("ask")
-                time.sleep(random.randint(10,60))
+                time.sleep(random.randint(5,30))
                 # print("sleeping")
             except Exception as e:
                 # print(e)
             
-                time.sleep(random.randint(10,60))
+                time.sleep(random.randint(5,30))
                 # print("error sleeping")
 
                 # pass
@@ -117,6 +117,24 @@ for i, row in tqdm(worksheet_dataframe.iterrows() , total=worksheet_dataframe.sh
 print("updating sheets")
 # worksheet_dataframe.to_csv("data.csv" , index =  False)
 dataframe_to_upload = worksheet_dataframe.fillna("")
-worksheet1.update([dataframe_to_upload.columns.values.tolist()] + dataframe_to_upload.values.tolist())
-print("sheets updated")
-time.sleep(5)
+# worksheet1.update([dataframe_to_upload.columns.values.tolist()] + dataframe_to_upload.values.tolist())
+# print("sheets updated")
+# time.sleep(5)
+
+
+#get goat Goat Lowest Price
+
+
+prices_list = []
+gp_column = dataframe_to_upload["Goat Lowest Price"]
+
+for price in gp_column:
+    prices_list.append(price)
+    
+def extractDigits(lst):
+    return [[el] for el in lst]
+
+m = extractDigits(prices_list)
+# print(m)
+worksheet2 = googlesheet.worksheet("Goat Check coltest")
+worksheet2.update("AB2:AB" , m)
